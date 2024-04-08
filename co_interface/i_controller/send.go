@@ -5,6 +5,7 @@ import (
 	"github.com/SupenBysz/gf-admin-community/api_v1"
 	"github.com/jack353249002/exam-message-send-modules/api/co_message_send_v1"
 	"github.com/jack353249002/exam-message-send-modules/co_model"
+	"github.com/kysion/base-library/base_model"
 )
 
 type ISend[
@@ -14,4 +15,5 @@ type ISend[
 	CreateSend(ctx context.Context, req *co_message_send_v1.CreateSendReq) (api_v1.BoolRes, error)
 	// 设置发送消息
 	SetSendInfoAction(ctx context.Context, req *co_message_send_v1.SetSendActionReq) (api_v1.BoolRes, error)
+	QuerySendInfoList(ctx context.Context, info *co_message_send_v1.GetSendInfoListReq) (*base_model.CollectRes[TIRes], error)
 }

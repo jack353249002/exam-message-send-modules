@@ -13,12 +13,16 @@ type GetMessageListReq struct {
 	base_model.SearchParams
 	Include []string `json:"include" dc:"需要附加数据的返回值字段集，如果没有填写，默认不附加数据"`
 }
+type GetSendInfoListReq struct {
+	base_model.SearchParams
+	Include []string `json:"include" dc:"需要附加数据的返回值字段集，如果没有填写，默认不附加数据"`
+}
 type CreateSendReq struct {
 	co_model.CoSend
 	Include []string `json:"include" dc:"需要附加数据的返回值字段集，如果没有填写，默认不附加数据"`
 }
 type SetSendActionReq struct {
 	Id      int      `json:"id" v:"required#id不能为空"  dc:"id"`
-	Status  int8     `json:"status" v:"required#状态不能为空"  dc:"status"`
+	Status  int8     `json:"status" v:"required#状态不能为空"  dc:"status(-1:停止,-2:暂停,1=开启)"`
 	Include []string `json:"include" dc:"需要附加数据的返回值字段集，如果没有填写，默认不附加数据"`
 }

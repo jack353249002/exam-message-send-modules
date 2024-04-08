@@ -22,6 +22,10 @@ type GetMessageListReq struct {
 	g.Meta ` method:"post" summary:"获取消息列表" tags:"消息推送系统-消息设置"`
 	co_message_send_v1.GetMessageListReq
 }
+type GetSendInfoListReq struct {
+	g.Meta ` method:"post" summary:"获取推送规则列表" tags:"消息推送系统-推送"`
+	co_message_send_v1.GetSendInfoListReq
+}
 type SendReq struct {
 	Title        string `json:"title"    description:"标题"  default:"" `
 	MessageId    int    `json:"message_id"    description:"消息id"  default:""`

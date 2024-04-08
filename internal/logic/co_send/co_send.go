@@ -10,7 +10,13 @@ import (
 	"github.com/jack353249002/exam-message-send-modules/co_interface"
 	"github.com/jack353249002/exam-message-send-modules/co_model"
 	"github.com/jack353249002/exam-message-send-modules/co_model/co_dao"
+	"github.com/jack353249002/exam-message-send-modules/co_model/co_do"
 	"github.com/jack353249002/exam-message-send-modules/co_model/co_entity"
+	"github.com/jack353249002/exam-message-send-modules/internal/logic/send/sendunit"
+	"github.com/kysion/base-library/base_model"
+	"github.com/kysion/base-library/utility/daoctl"
+	"math"
+	"strconv"
 	"strings"
 )
 
@@ -76,5 +82,51 @@ func (s *sSend[TR, TSR]) CreateSend(ctx context.Context, title string, messageId
 	return true, nil
 }
 func (s *sSend[TR, TSR]) SetSendInfoAction(ctx context.Context, sendId int, status int8) (bool, error) {
+	var coSend co_entity.Send
+	var coSendList []co_entity.SendList
+	co_dao.Send.Ctx(ctx).Where(co_do.Send{Id: sendId}).Scan(&coSend)
+	if coSend.Id == 0 {
+		return false, sys_service.SysLogs().ErrorSimple(ctx, gerror.NewCode(gcode.CodeDbOperationError, "发送消息规则不存在"), "", co_dao.Send.Table())
+	} else {
+		if status == 1 || status == -1 || status == -2 {
+			key := strconv.Itoa(sendId)
+			emailSend, sendUnitHave := sendunit.GetSendEmailUnitPool(key)
+			switch status {
+			case 1:
+				if sendUnitHave {
+					emailSend.Start()
+				} else {
+					co_dao.SendList.Ctx(ctx).Where("send_id=? AND status=0", sendId).Scan(&coSendList)
+					num := math.Ceil(float64(len(coSendList)) / 2.0)
+					sendUnit := sendunit.SendFactory(coSend.SendModel)
+					if sendUnit == nil {
+						return false, sys_service.SysLogs().ErrorSimple(ctx, gerror.NewCode(gcode.CodeDbOperationError, "发送模型不存在"), "", co_dao.Send.Table())
+					}
+					sendUnit.Init(int(num), &coSend, &coSendList, context.Background())
+				}
+			case -2:
+				if sendUnitHave {
+					emailSend.Pause()
+				} else {
+					return false, sys_service.SysLogs().ErrorSimple(ctx, gerror.NewCode(gcode.CodeDbOperationError, "控制单元不存在"), "", co_dao.Send.Table())
+				}
+			case -1:
+				if sendUnitHave {
+					emailSend.Stop()
+				} else {
+					return false, sys_service.SysLogs().ErrorSimple(ctx, gerror.NewCode(gcode.CodeDbOperationError, "控制单元不存在"), "", co_dao.Send.Table())
+				}
+			}
+		} else {
+			return false, sys_service.SysLogs().ErrorSimple(ctx, gerror.NewCode(gcode.CodeDbOperationError, "控制单元不存在"), "", co_dao.Send.Table())
+		}
+	}
 	return true, nil
+}
+
+// 消息列表
+func (s *sSend[TR, TSR]) QuerySendInfoList(ctx context.Context, filter *base_model.SearchParams) (*base_model.CollectRes[TSR], error) {
+	result, err := daoctl.Query[TSR](co_dao.Send.Ctx(ctx), filter, false)
+	return result, err
+
 }

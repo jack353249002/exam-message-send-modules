@@ -8,6 +8,7 @@ import (
 	"github.com/jack353249002/exam-message-send-modules/co_interface"
 	"github.com/jack353249002/exam-message-send-modules/co_interface/i_controller"
 	"github.com/jack353249002/exam-message-send-modules/co_model"
+	"github.com/kysion/base-library/utility/kconv"
 )
 
 type SendController[
@@ -30,8 +31,14 @@ func (c *SendController[TIRes, TISRes]) CreateSend(ctx context.Context, req *co_
 	return ok, err
 }
 
-// 消息列表
+// 设置发送命令
 func (c *SendController[TIRes, TISRes]) SetSendInfoAction(ctx context.Context, req *co_v1.SetSendActionReq) (api_v1.BoolRes, error) {
 	ok, err := c.ISend.SetSendInfoAction(ctx, &req.SetSendActionReq)
 	return ok, err
+}
+
+// 规则列表
+func (c *SendController[TIRes, TISRes]) QuerySendInfoList(ctx context.Context, req *co_v1.GetSendInfoListReq) (*co_model.SendListRes, error) {
+	ret, err := c.ISend.QuerySendInfoList(ctx, &req.GetSendInfoListReq)
+	return kconv.Struct(ret, &co_model.SendListRes{}), err
 }

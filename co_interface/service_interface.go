@@ -22,6 +22,7 @@ type (
 		CreateSend(ctx context.Context, title string, messageId int, sendServerId string, receive string) (bool, error)
 		// 设置发送消息
 		SetSendInfoAction(ctx context.Context, sendId int, status int8) (bool, error)
+		QuerySendInfoList(ctx context.Context, info *base_model.SearchParams) (*base_model.CollectRes[TR], error)
 	}
 	ICompany[TR co_model.ICompanyRes] interface {
 		GetCompanyById(ctx context.Context, id int64) (response TR, err error)

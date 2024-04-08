@@ -35,5 +35,6 @@ func SendGroup[
 
 	group.POST(routePrefix+"/createSend", controller.CreateSend)
 	group.POST(routePrefix+"/setSendAction", controller.SetSendInfoAction)
+	group.POST(routePrefix+"/querySendInfoList", controller.QuerySendInfoList)
 	return group
 }
