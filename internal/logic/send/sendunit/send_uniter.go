@@ -2,7 +2,7 @@ package sendunit
 
 import (
 	"context"
-	"github.com/jack353249002/exam-message-send/sys_model/sys_entity"
+	"github.com/jack353249002/exam-message-send-modules/co_model/co_entity"
 )
 
 func SendFactory(unitType int) SendUniter {
@@ -15,8 +15,8 @@ func SendFactory(unitType int) SendUniter {
 }
 
 type SendUniter interface {
-	AddSendList(*sys_entity.CoSendList)
-	Init(int, *sys_entity.CoSend, *[]sys_entity.CoSendList, context.Context)
+	AddSendList(*co_entity.SendList)
+	Init(int, *co_entity.Send, *[]co_entity.SendList, context.Context)
 	Stop()
 	Pause()
 	Start()

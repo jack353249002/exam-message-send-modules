@@ -11,7 +11,7 @@ type EmailDispatcher interface {
 	MoveIndex()
 	FillServer([]co_entity.SmtpServer)
 	GetServer() (SmtpServerInfo, int, bool)
-	GetServerListen() (sys_entity.CoSmtpServer, int, bool, bool)
+	GetServerListen() (co_entity.SmtpServer, int, bool, bool)
 	RemoveServer(int, int, string)
 	Init(int, context.Context)
 	SetIsWaitServer()

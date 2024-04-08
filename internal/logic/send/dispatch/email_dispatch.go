@@ -3,7 +3,7 @@ package dispatch
 import (
 	"context"
 	"fmt"
-	"github.com/jack353249002/exam-message-send/sys_model/sys_entity"
+	"github.com/jack353249002/exam-message-send-modules/co_model/co_entity"
 	"sync"
 	"time"
 )
@@ -13,7 +13,7 @@ func NewEmailDispatchPollingFactory() EmailDispatcher {
 }
 
 type SmtpServerInfo struct {
-	SmtpServer            sys_entity.CoSmtpServer
+	SmtpServer            co_entity.SmtpServer
 	ErrorCount            int
 	Index                 int
 	Have                  bool
@@ -223,7 +223,7 @@ func (e *EmailDispatchPolling) Init(errorMax int, context context.Context) {
 	e.SetIsWaitServer()
 	go e.getSignal()
 }
-func (e *EmailDispatchPolling) FillServer(smtps []sys_entity.CoSmtpServer) {
+func (e *EmailDispatchPolling) FillServer(smtps []co_entity.SmtpServer) {
 	e.Length = len(smtps)
 	e.LengthReady = e.Length
 	//e.SmtpServer=smtps
@@ -258,7 +258,7 @@ func (e *EmailDispatchPolling) GetServer() (res SmtpServerInfo, index int, have 
 }
 
 // listenHaveServer:如果当前没有可用服务器，可以进行阻塞并待有数据后再触发
-func (e *EmailDispatchPolling) GetServerListen() (res sys_entity.CoSmtpServer, index int, have bool, inErrCheckCoolTime bool) {
+func (e *EmailDispatchPolling) GetServerListen() (res co_entity.SmtpServer, index int, have bool, inErrCheckCoolTime bool) {
 	smtpInfo, index, have := e.GetServer()
 	if have {
 		res = smtpInfo.SmtpServer

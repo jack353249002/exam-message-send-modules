@@ -18,7 +18,7 @@ type CreateSendReq struct {
 	Include []string `json:"include" dc:"需要附加数据的返回值字段集，如果没有填写，默认不附加数据"`
 }
 type SetSendActionReq struct {
-	Id      string   `json:"id" v:"required#id不能为空"  dc:"id"`
+	Id      int      `json:"id" v:"required#id不能为空"  dc:"id"`
 	Status  int8     `json:"status" v:"required#状态不能为空"  dc:"status"`
 	Include []string `json:"include" dc:"需要附加数据的返回值字段集，如果没有填写，默认不附加数据"`
 }

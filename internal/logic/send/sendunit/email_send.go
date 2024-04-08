@@ -4,11 +4,11 @@ import (
 	"container/list"
 	"context"
 	"fmt"
-	dispatch2 "github.com/jack353249002/exam-message-send/internal/logic/send/dispatch"
-	"github.com/jack353249002/exam-message-send/internal/logic/send/sendserver"
-	"github.com/jack353249002/exam-message-send/sys_model/sys_dao"
-	"github.com/jack353249002/exam-message-send/sys_model/sys_do"
-	"github.com/jack353249002/exam-message-send/sys_model/sys_entity"
+	"github.com/jack353249002/exam-message-send-modules/co_model/co_dao"
+	"github.com/jack353249002/exam-message-send-modules/co_model/co_do"
+	"github.com/jack353249002/exam-message-send-modules/co_model/co_entity"
+	dispatch2 "github.com/jack353249002/exam-message-send-modules/internal/logic/send/dispatch"
+	"github.com/jack353249002/exam-message-send-modules/internal/logic/send/sendserver"
 	"strconv"
 	"strings"
 	"sync"
@@ -18,15 +18,15 @@ type EmailSendResponse struct {
 	Code int
 }
 type EmailSend struct {
-	SendInfo      *sys_entity.CoSend
-	SendList      chan *sys_entity.CoSendList
-	SendListModel *[]sys_entity.CoSendList
-	Message       *sys_entity.CoMessage
+	SendInfo      *co_entity.Send
+	SendList      chan *co_entity.SendList
+	SendListModel *[]co_entity.SendList
+	Message       *co_entity.Message
 	MaxGo         int //协程数量
 	Response      chan *EmailSendResponse
 	WithGroup     sync.WaitGroup
 	Ctx           context.Context
-	SmtpServer    sys_entity.CoSmtpServer
+	SmtpServer    co_entity.SmtpServer
 	Dispatch      dispatch2.EmailDispatcher
 	Signal        *list.List
 	SignalLock    sync.RWMutex
@@ -40,36 +40,36 @@ type SignalCmd struct {
 	Signal    chan int8
 }
 
-func (e *EmailSend) AddSendList(sendList *sys_entity.CoSendList) {
+func (e *EmailSend) AddSendList(sendList *co_entity.SendList) {
 	//e.WithGroup.Add(1)
 	e.SendList <- sendList
 }
-func (e *EmailSend) Init(maxGo int, sendInfo *sys_entity.CoSend, sendList *[]sys_entity.CoSendList, ctx context.Context) {
+func (e *EmailSend) Init(maxGo int, sendInfo *co_entity.Send, sendList *[]co_entity.SendList, ctx context.Context) {
 	e.SendListModel = sendList
 	e.Signal = list.New()
 	e.HaveSignalCmd = make(chan int8)
 	key := strconv.Itoa(sendInfo.Id)
 	SendUnitPool.Store(key, e)
 	e.Ctx = ctx
-	messageInfo := sys_entity.CoMessage{}
-	sys_dao.CoMessage.Ctx(ctx).Where(sys_do.CoMessage{
+	messageInfo := co_entity.Message{}
+	co_dao.Message.Ctx(ctx).Where(co_do.Message{
 		Id: sendInfo.MessageId,
 	}).Scan(&messageInfo)
 	e.Message = &messageInfo
 	e.Dispatch = dispatch2.NewEmailDispatchPollingFactory()
 	serverIds := strings.Split(sendInfo.SendServerId, ",")
-	var smtpServer []sys_entity.CoSmtpServer
-	sys_dao.CoSmtpServer.Ctx(ctx).WhereIn(sys_dao.CoSmtpServer.Columns().Id, serverIds).Scan(&smtpServer)
+	var smtpServer []co_entity.SmtpServer
+	co_dao.SmtpServer.Ctx(ctx).WhereIn(co_dao.SmtpServer.Columns().Id, serverIds).Scan(&smtpServer)
 	e.Dispatch.Init(5, e.Ctx)
 	e.Dispatch.FillServer(smtpServer)
 	sendListLength := len(*sendList)
 	e.WithGroup = sync.WaitGroup{}
 	e.WithGroup.Add(sendListLength)
-	sys_dao.CoSend.Ctx(ctx).Data(sys_do.CoSend{Status: 1}).Where("id", sendInfo.Id).Update()
+	co_dao.Send.Ctx(ctx).Data(co_do.Send{Status: 1}).Where("id", sendInfo.Id).Update()
 	e.StatusLock.Lock()
 	e.Status = 1
 	e.StatusLock.Unlock()
-	e.SendList = make(chan *sys_entity.CoSendList, sendListLength)
+	e.SendList = make(chan *co_entity.SendList, sendListLength)
 	for _, val := range *sendList {
 		valtemp := val
 		select {
@@ -104,15 +104,15 @@ func (e *EmailSend) Init(maxGo int, sendInfo *sys_entity.CoSend, sendList *[]sys
 				waitGroup.Wait()
 				fmt.Println("cmd with end")
 				if sign == 1 && beforeSign != -2 {
-					sys_dao.CoSend.Ctx(ctx).Data(sys_do.CoSend{Status: 1}).Where("id", e.SendInfo.Id).Update()
+					co_dao.Send.Ctx(ctx).Data(co_do.Send{Status: 1}).Where("id", e.SendInfo.Id).Update()
 					e.Status = 1
 					e.StatusLock.Unlock()
 				}
 				if sign == 1 && beforeSign == -2 {
-					sys_dao.CoSend.Ctx(ctx).Data(sys_do.CoSend{Status: 1}).Where("id", e.SendInfo.Id).Update()
+					co_dao.Send.Ctx(ctx).Data(co_do.Send{Status: 1}).Where("id", e.SendInfo.Id).Update()
 				}
 				if sign == -2 {
-					sys_dao.CoSend.Ctx(ctx).Data(sys_do.CoSend{Status: 3}).Where("id", e.SendInfo.Id).Update()
+					co_dao.Send.Ctx(ctx).Data(co_do.Send{Status: 3}).Where("id", e.SendInfo.Id).Update()
 				}
 				if sign == -1 && beforeSign != -2 {
 					e.Status = 0
@@ -120,7 +120,7 @@ func (e *EmailSend) Init(maxGo int, sendInfo *sys_entity.CoSend, sendList *[]sys
 					e.Close()
 					sendInfoIDKey := strconv.Itoa(e.SendInfo.Id)
 					SendUnitPool.Delete(sendInfoIDKey)
-					sys_dao.CoSend.Ctx(ctx).Data(sys_do.CoSend{Status: 2}).Where("id", e.SendInfo.Id).Update()
+					co_dao.Send.Ctx(ctx).Data(co_do.Send{Status: 2}).Where("id", e.SendInfo.Id).Update()
 				}
 				if sign == -1 && beforeSign == -2 {
 					e.StatusLock.Lock()
@@ -129,7 +129,7 @@ func (e *EmailSend) Init(maxGo int, sendInfo *sys_entity.CoSend, sendList *[]sys
 					e.Close()
 					sendInfoIDKey := strconv.Itoa(e.SendInfo.Id)
 					SendUnitPool.Delete(sendInfoIDKey)
-					sys_dao.CoSend.Ctx(ctx).Data(sys_do.CoSend{Status: 2}).Where("id", e.SendInfo.Id).Update()
+					co_dao.Send.Ctx(ctx).Data(co_do.Send{Status: 2}).Where("id", e.SendInfo.Id).Update()
 				}
 				beforeSign = sign
 				fmt.Println("waitend")
@@ -140,8 +140,8 @@ func (e *EmailSend) Init(maxGo int, sendInfo *sys_entity.CoSend, sendList *[]sys
 		e.WithGroup.Wait()
 		e.Close()
 		//sql = fmt.Sprintf("send_id=%d AND status=1", e.SendInfo.ID)
-		count, _ := sys_dao.CoSendList.Ctx(ctx).Where("send_id", e.SendInfo.Id).Where("status", 1).Count()
-		sys_dao.CoSend.Ctx(ctx).Data(sys_do.CoSend{Status: 2, SuccessCount: count}).Where("id", e.SendInfo.Id).Update()
+		count, _ := co_dao.SendList.Ctx(ctx).Where("send_id", e.SendInfo.Id).Where("status", 1).Count()
+		co_dao.Send.Ctx(ctx).Data(co_do.Send{Status: 2, SuccessCount: count}).Where("id", e.SendInfo.Id).Update()
 		sendInfoKey := strconv.Itoa(sendInfo.Id)
 		SendUnitPool.Delete(sendInfoKey)
 	}()
@@ -179,7 +179,7 @@ func (e *EmailSend) StartSend(signalCmd *SignalCmd, goIndex int) {
 	type SingnalInfo struct {
 		SignalType uint8 //0=数据,1=信号
 		Signal     int8
-		SendList   *sys_entity.CoSendList
+		SendList   *co_entity.SendList
 	}
 	var privateSignal chan *SingnalInfo
 	privateSignal = make(chan *SingnalInfo)
@@ -274,7 +274,7 @@ func (e *EmailSend) StartSend(signalCmd *SignalCmd, goIndex int) {
 					}
 					e.AddSendList(val.SendList)
 				} else {
-					sys_dao.CoSendList.Ctx(e.Ctx).Data(sys_do.CoSendList{Status: 1, SendServerId: server.Id}).Where("id", val.SendList.Id).Update()
+					co_dao.SendList.Ctx(e.Ctx).Data(co_do.SendList{Status: 1, SendServerId: server.Id}).Where("id", val.SendList.Id).Update()
 					e.WithGroup.Done()
 				}
 			} else {
@@ -284,7 +284,7 @@ func (e *EmailSend) StartSend(signalCmd *SignalCmd, goIndex int) {
 		}
 	}
 }
-func (e *EmailSend) Send(send *sys_entity.CoSendList, smtpserver *sys_entity.CoSmtpServer) (err error) {
+func (e *EmailSend) Send(send *co_entity.SendList, smtpserver *co_entity.SmtpServer) (err error) {
 	var smtp sendserver.Smtp
 	smtp.Port = smtpserver.Port
 	smtp.Server = smtpserver.SmtpServer
