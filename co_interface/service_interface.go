@@ -8,12 +8,21 @@ import (
 	"github.com/jack353249002/exam-message-send-modules/co_model/co_dao"
 	"github.com/jack353249002/exam-message-send-modules/co_model/co_enum"
 	"github.com/jack353249002/exam-message-send-modules/co_model/co_hook"
-	"github.com/gogf/gf/v2/i18n/gi18n"
 	"github.com/kysion/base-library/base_hook"
 	"github.com/kysion/base-library/base_model"
 )
 
 type (
+	IMessage[TR co_model.IMessageRes] interface {
+		CreateMessage(ctx context.Context, title string, body string) (bool, error)
+		QueryMessageList(ctx context.Context, info *base_model.SearchParams) (*base_model.CollectRes[TR], error)
+	}
+	ISend[TR co_model.ISendRes] interface {
+		// 添加发送规则
+		CreateSend(ctx context.Context, title string, messageId int, sendServerId string, receive string) (bool, error)
+		// 设置发送消息
+		SetSendInfoAction(ctx context.Context, sendId int, status int8) (bool, error)
+	}
 	ICompany[TR co_model.ICompanyRes] interface {
 		GetCompanyById(ctx context.Context, id int64) (response TR, err error)
 		GetCompanyByName(ctx context.Context, name string) (response TR, err error)
@@ -169,30 +178,9 @@ type IConfig interface {
 //}
 
 type IModules[
-	ITCompanyRes co_model.ICompanyRes,
-	ITEmployeeRes co_model.IEmployeeRes,
-	ITTeamRes co_model.ITeamRes,
-	ITFdAccountRes co_model.IFdAccountRes,
-	ITFdAccountBillRes co_model.IFdAccountBillRes,
-	ITFdBankCardRes co_model.IFdBankCardRes,
-	ITFdCurrencyRes co_model.IFdCurrencyRes,
-	ITFdInvoiceRes co_model.IFdInvoiceRes,
-	ITFdInvoiceDetailRes co_model.IFdInvoiceDetailRes,
+	ITMessageRes co_model.IMessageRes,
+	ITSendRes co_model.ISendRes,
 ] interface {
-	IConfig
-	Company() ICompany[ITCompanyRes]
-	Team() ITeam[ITTeamRes]
-	Employee() IEmployee[ITEmployeeRes]
-	My() IMy
-	Account() IFdAccount[ITFdAccountRes]
-	AccountBill() IFdAccountBill[ITFdAccountBillRes]
-	BankCard() IFdBankCard[ITFdBankCardRes]
-	Currency() IFdCurrency[ITFdCurrencyRes]
-	Invoice() IFdInvoice[ITFdInvoiceRes]
-	InvoiceDetail() IFdInvoiceDetail[ITFdInvoiceDetailRes]
-
-	SetI18n(i18n *gi18n.Manager) error
-	T(ctx context.Context, content string) string
-	Tf(ctx context.Context, format string, values ...interface{}) string
-	Dao() *co_dao.XDao
+	Message() IMessage[ITMessageRes]
+	Send() ISend[ITSendRes]
 }

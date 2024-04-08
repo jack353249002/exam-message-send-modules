@@ -1,6 +1,7 @@
 package co_dao
 
 type XDao struct {
+	Message    MessageDao
 	Company    CompanyDao
 	Employee   CompanyEmployeeDao
 	Team       CompanyTeamDao

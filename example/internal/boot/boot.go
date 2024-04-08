@@ -5,14 +5,12 @@ import (
 	"github.com/SupenBysz/gf-admin-community/api_v1"
 	"github.com/SupenBysz/gf-admin-community/sys_controller"
 	"github.com/SupenBysz/gf-admin-community/sys_service"
-	"github.com/jack353249002/exam-message-send-modules/co_controller/lincense"
-	_ "github.com/jack353249002/exam-message-send-modules/example/internal/boot/internal"
-
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/net/ghttp"
 	"github.com/gogf/gf/v2/os/gcmd"
 	"github.com/gogf/gf/v2/os/gfile"
 	"github.com/gogf/gf/v2/util/gmode"
+	_ "github.com/jack353249002/exam-message-send-modules/example/internal/boot/internal"
 	"github.com/jack353249002/exam-message-send-modules/example/internal/consts"
 	"github.com/jack353249002/exam-message-send-modules/example/router"
 )
@@ -98,24 +96,18 @@ var (
 				// 权限路由绑定
 				group.Group("/", func(group *ghttp.RouterGroup) {
 					// 注册中间件
-					group.Middleware(
+					/*group.Middleware(
 						sys_service.Middleware().Auth,
-					)
+					)*/
 
 					// 注册公司模块路由 （包含：公司、团队、员工）
+					//router.ModulesGroup(consts.Global.IModules, group)
 					router.ModulesGroup(consts.Global.IModules, group)
-
-					// 注册财务模块路由 (可选)
-					router.FinancialGroup(consts.Global.IModules, group)
-
 					// 审核管理
-					group.Group("/audit", func(group *ghttp.RouterGroup) { group.Bind(sys_controller.SysAudit) })
+					//group.Group("/audit", func(group *ghttp.RouterGroup) { group.Bind(sys_controller.SysAudit) })
 
 					// 个人资质管理
-					group.Group("/person_license", func(group *ghttp.RouterGroup) { group.Bind(sys_controller.SysLicense) })
-
-					// 主体资质管理
-					group.Group("/license", func(group *ghttp.RouterGroup) { group.Bind(lincense.License) })
+					//group.Group("/person_license", func(group *ghttp.RouterGroup) { group.Bind(sys_controller.SysLicense) })
 
 				})
 			})
